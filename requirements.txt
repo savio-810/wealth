@@ -1,3 +1,3 @@
-pandas
-matplotlob
-streamlit
+pandas==1.3.3
+matplotlib==3.4.3
+streamlit==0.89.0
