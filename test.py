@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
 # Função para processar novos dados
@@ -8,7 +9,7 @@ def process_new_data(new_data):
     df_col = new_data[['From', 'Connect time', 'Charged time, hour:min:sec']]
     
     valores_para_filtrar = ['3231420315', '3231420314', '3231420319', '1006 (3231420314 - Camila)',  
-                            '1008 (3231420315 - Victoria)', '3231420312', 
+                            '1008 (3231420315 - Victoria)', '3231420316', '3231420312', 
                             '3231420310', '3231420313', '1002 (3231420312 - Vanessa)', 
                             '1012 (3231420310 - Leo)', '3231420317', 
                             '1015 (3231420319 - Gabriel)', '1004 (3231420313 - Joao Pedro)',
@@ -90,25 +91,23 @@ if uploaded_file is not None:
     # Layout do Dashboard
     col1, col2, col3 = st.columns(3)
 
-    # Tabela de Ligações
-    with col1.expander("Tabela de Ligações"):
-        st.write(filtered_data)
-
     # Histograma de horário das ligações
-    with col2.expander("Densidade horário de ligações"):
+    with col1.expander("Densidade horário de ligações"):
         filtered_data['Hora'] = filtered_data['Connect time'].dt.hour + filtered_data['Connect time'].dt.minute / 60
         hist_fig = px.histogram(filtered_data, x='Hora', nbins=14, title='Distribuição de Ligações por Hora do Dia',
                                 labels={'Hora':'Hora do Dia'}, range_x=[7, 20])
+        hist_fig.update_traces(marker_line_width=2, marker_line_color='black')
+        hist_fig.update_layout(xaxis=dict(tickmode='linear', dtick=1))
         st.plotly_chart(hist_fig, use_container_width=True)
 
     # Gráfico de barras de ligações por SDR
-    with col3.expander("Ligações por SDR"):
+    with col2.expander("Ligações por SDR"):
         sdr_counts = filtered_data['From'].value_counts()
         bar_fig = px.bar(sdr_counts, orientation='h', title='Número de Ligações por SDR', labels={'index':'SDR', 'value':'Número de Ligações'})
         st.plotly_chart(bar_fig, use_container_width=True)
 
     # Gráfico de linha de ligações ao longo do tempo
-    with st.expander("Ligações por dia"):
+    with col3.expander("Ligações por dia"):
         filtered_data['Data'] = filtered_data['Connect time'].dt.date
         line_data = filtered_data.groupby('Data').size().reset_index(name='counts')
         line_fig = px.line(line_data, x='Data', y='counts', markers=True, title='Número de Ligações ao Longo do Tempo')
