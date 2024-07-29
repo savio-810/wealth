@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
 from datetime import datetime, timedelta
 
 # Função para processar novos dados
@@ -94,48 +94,30 @@ if uploaded_file is not None:
     # Histograma de horário das ligações
     with st.expander("Densidade horário de ligações"):
         filtered_data['Hora'] = filtered_data['Connect time'].dt.hour + filtered_data['Connect time'].dt.minute / 60
-        plt.figure(figsize=(10, 6))
-        plt.hist(filtered_data['Hora'], bins=range(7, 21), color='skyblue', edgecolor='black')
-        plt.xticks(range(7, 21))
-        plt.xlabel('Hora do Dia')
-        plt.ylabel('Número de Ligações')
-        plt.title('Distribuição de Ligações por Hora do Dia')
-        st.pyplot(plt)
+        fig = px.histogram(filtered_data, x='Hora', nbins=14, range_x=[7, 21], title='Distribuição de Ligações por Hora do Dia')
+        fig.update_layout(xaxis_title='Hora do Dia', yaxis_title='Número de Ligações', bargap=0.2)
+        st.plotly_chart(fig)
 
     # Gráfico de barras de ligações por SDR
     with st.expander("Ligações por SDR"):
-        sdr_counts = filtered_data['From'].value_counts()
-        plt.figure(figsize=(10, 6))
-        sdr_counts.plot(kind='barh', color=['red', 'green', 'blue', 'purple', 'orange', 'yellow', 'pink', 'brown'])
-        plt.ylabel('SDR')
-        plt.xlabel('Número de Ligações')
-        plt.title('Número de Ligações por SDR')
-        for i, count in enumerate(sdr_counts):
-            plt.text(count + 0.1, i, str(count), va='center')
-        st.pyplot(plt)
+        sdr_counts = filtered_data['From'].value_counts().reset_index()
+        sdr_counts.columns = ['From', 'Count']
+        fig = px.bar(sdr_counts, x='Count', y='From', orientation='h', title='Número de Ligações por SDR')
+        st.plotly_chart(fig)
 
     # Gráfico de linha de ligações ao longo do tempo
     with st.expander("Ligações por dia"):
         filtered_data['Data'] = filtered_data['Connect time'].dt.date
-        line_data = filtered_data.groupby('Data').size()
-        plt.figure(figsize=(10, 6))
-
-        # Gráfico de linha geral
-        plt.plot(line_data.index, line_data.values, marker='o', linestyle='-', label='Geral')
-
+        line_data = filtered_data.groupby('Data').size().reset_index(name='Count')
+        fig = px.line(line_data, x='Data', y='Count', title='Número de Ligações ao Longo do Tempo', markers=True)
+        
         # Gráficos de linha por SDR na visão geral
         if selected_sdr == "Visão Geral":
             for sdr in sdrs:
                 sdr_data = filtered_data[filtered_data['From'] == sdr]
-                sdr_line_data = sdr_data.groupby('Data').size()
-                plt.plot(sdr_line_data.index, sdr_line_data.values, marker='o', linestyle='-', label=sdr)
+                sdr_line_data = sdr_data.groupby('Data').size().reset_index(name='Count')
+                fig.add_scatter(x=sdr_line_data['Data'], y=sdr_line_data['Count'], mode='lines+markers', name=sdr)
         
-        plt.xlabel('Data')
-        plt.ylabel('Número de Ligações')
-        plt.title('Número de Ligações ao Longo do Tempo')
-        plt.xticks(rotation=45)
-        plt.legend()
-        st.pyplot(plt)
+        st.plotly_chart(fig)
 else:
     st.write("Por favor, faça o upload de um arquivo CSV para começar.")
-
