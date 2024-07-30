@@ -9,7 +9,7 @@ def process_new_data(new_data):
     df_col = new_data[['From', 'Connect time', 'Charged time, hour:min:sec']]
     
     valores_para_filtrar = ['3231420315', '3231420314', '3231420319', '1006 (3231420314 - Camila)',  
-                            '1008 (3231420315 - Victoria)', '3231420316', '3231420312', 
+                            '1008 (3231420315 - Victoria)', '3231420316', '1010 (3231420316 - Mateus)', '3231420312', 
                             '3231420310', '3231420313', '1002 (3231420312 - Vanessa)', 
                             '1012 (3231420310 - Leo)', '3231420317', 
                             '1015 (3231420319 - Gabriel)', '1004 (3231420313 - Joao Pedro)',
@@ -21,6 +21,7 @@ def process_new_data(new_data):
     substituicoes = {
         3231420314: '1006 (3231420314 - Camila)',
         3231420315: '1008 (3231420315 - Victoria)',
+        3231420316 : '1010 (3231420316 - Aide)',
         3231420312: '1002 (3231420312 - Vanessa)',
         3231420313: '1004 (3231420313 - Joao Pedro)',
         3231420317: '1014 (3231420317 - Joao Vitor)',
@@ -59,7 +60,7 @@ if uploaded_file is not None:
         '1008 (3231420315 - Victoria)', '1014 (3231420317 - Joao Vitor)',
         '1012 (3231420310 - Leo)', '1002 (3231420312 - Vanessa)',
         '1006 (3231420314 - Camila)', '1015 (3231420319 - Gabriel)',
-        '1004 (3231420313 - Joao Pedro)'
+        '1004 (3231420313 - Joao Pedro)', '1010 (3231420316 - Aide)'
     ]
     selected_sdr = st.selectbox("Escolha um SDR", ["Visão Geral"] + sdrs)
     
