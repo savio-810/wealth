@@ -82,12 +82,14 @@ if uploaded_file is not None:
         if "Zero" in selected_durations:
             duration_filters.append(filtered_data['Charged time, hour:min:sec'] == timedelta(seconds=0))
         if "Menos de 1 min" in selected_durations:
-            duration_filters.append(filtered_data['Charged time, hour:min:sec'] <= timedelta(minutes=1))
+            duration_filters.append((filtered_data['Charged time, hour:min:sec'] > timedelta(seconds=0)) & 
+                                    (filtered_data['Charged time, hour:min:sec'] < timedelta(minutes=1)))
         if "Mais de 1 min" in selected_durations:
             duration_filters.append(filtered_data['Charged time, hour:min:sec'] >= timedelta(minutes=1))
         if "Mais de 2 min" in selected_durations:
             duration_filters.append(filtered_data['Charged time, hour:min:sec'] >= timedelta(minutes=2))
         filtered_data = filtered_data[pd.concat(duration_filters, axis=1).any(axis=1)]
+
 
     # Layout do Dashboard
     col1, col2, col3 = st.columns(3)
