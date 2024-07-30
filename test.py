@@ -105,7 +105,19 @@ if uploaded_file is not None:
     with col2.expander("Ligações por SDR"):
         sdr_counts = filtered_data['From'].value_counts()
         bar_fig = px.bar(sdr_counts, orientation='h', title='Número de Ligações por SDR', labels={'index':'SDR', 'value':'Número de Ligações'})
+
+        # Calcular a média das ligações por SDR
+        avg_calls = sdr_counts.mean()
+
+        # Adicionar linha vertical pontilhada vermelha para a média
+        bar_fig.add_shape(
+            type='line',
+            x0=avg_calls, y0=-0.5, x1=avg_calls, y1=len(sdr_counts)-0.5,
+            line=dict(color='red', width=2, dash='dot')
+        )
+
         st.plotly_chart(bar_fig, use_container_width=True)
+
 
     # Gráfico de linha de ligações ao longo do tempo
     with col3.expander("Ligações por dia"):
