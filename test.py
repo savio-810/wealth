@@ -117,6 +117,13 @@ if uploaded_file is not None:
             x0=avg_calls, y0=-0.5, x1=avg_calls, y1=len(sdr_counts)-0.5,
             line=dict(color='red', width=2, dash='dot')
         )
+        
+        # Adicionar anotação para o valor da média no eixo x
+        bar_fig.add_annotation(
+            x=avg_calls, y=len(sdr_counts)-0.5, text=f"Média: {avg_calls:.2f}",
+            showarrow=True, arrowhead=2, ax=0, ay=-40,
+            bgcolor="red"
+        )
 
         st.plotly_chart(bar_fig, use_container_width=True)
 
