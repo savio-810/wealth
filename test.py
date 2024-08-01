@@ -4,7 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import geopandas as gpd
-from geobr import read_state
 import matplotlib.pyplot as plt
 
 # Função para processar novos dados
@@ -141,39 +140,6 @@ if uploaded_file is not None:
         hist_fig.update_traces(marker_line_width=2, marker_line_color='black')
         hist_fig.update_layout(xaxis=dict(tickmode='linear', dtick=1))
         st.plotly_chart(hist_fig, use_container_width=True)
-
-    # Mapa de calor de ligações por estado
-    with col1.expander("Mapa de Calor de Ligações por Estado"):
-        # Contagem de ligações por estado
-        state_counts = filtered_data['DDD'].value_counts().reset_index()
-        state_counts.columns = ['Estado', 'Número de Ligações']
-
-        # Carregar o mapa do Brasil dividido por estados
-        brasil = read_state(year=2020)
-
-        # Mapeamento de DDDs para estados
-        estado_abbr = {
-            'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM', 'Bahia': 'BA', 'Ceará': 'CE', 
-            'Distrito Federal': 'DF', 'Espírito Santo': 'ES', 'Goiás': 'GO', 'Maranhão': 'MA', 'Mato Grosso': 'MT', 
-            'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG', 'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 
-            'Pernambuco': 'PE', 'Piauí': 'PI', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN', 'Rio Grande do Sul': 'RS', 
-            'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC', 'São Paulo': 'SP', 'Sergipe': 'SE', 'Tocantins': 'TO'
-        }
-        state_counts['Estado'] = state_counts['Estado'].map(estado_abbr)
-
-        # Merge das contagens de ligações com o GeoDataFrame
-        brasil = brasil.merge(state_counts, left_on='abbrev_state', right_on='Estado', how='left')
-
-        # Plot do mapa de calor
-        fig, ax = plt.subplots(1, 1, figsize=(15, 15))
-        brasil.plot(column='Número de Ligações', cmap='Reds', linewidth=0.8, ax=ax, edgecolor='0.8', legend=True)
-        ax.set_title('Número de Ligações por Estado', fontdict={'fontsize': '15', 'fontweight' : '3'})
-
-        # Adicionar legenda numérica em cada estado
-        for x, y, label in zip(brasil.geometry.centroid.x, brasil.geometry.centroid.y, brasil['Número de Ligações']):
-            ax.text(x, y, str(int(label)) if not pd.isna(label) else '0', fontsize=12, ha='center', color='black')
-
-        st.pyplot(fig)
 
     # Gráfico de barras de ligações por SDR
     with col2.expander("Ligações por SDR"):
