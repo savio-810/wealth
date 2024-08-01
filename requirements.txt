@@ -2,7 +2,7 @@ streamlit
 pandas
 plotly
 geopandas
-geobr
+git+https://github.com/ipeaGIT/geobr.git
 matplotlib
 pyproj
 shapely
