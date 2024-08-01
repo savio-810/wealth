@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
-import geopandas as gpd
 import matplotlib.pyplot as plt
 
 # Função para processar novos dados
@@ -128,7 +127,6 @@ if uploaded_file is not None:
             duration_filters.append(filtered_data['Charged time, hour:min:sec'] >= timedelta(minutes=2))
         filtered_data = filtered_data[pd.concat(duration_filters, axis=1).any(axis=1)]
 
-
     # Layout do Dashboard
     col1, col2, col3 = st.columns(3)
 
@@ -140,6 +138,18 @@ if uploaded_file is not None:
         hist_fig.update_traces(marker_line_width=2, marker_line_color='black')
         hist_fig.update_layout(xaxis=dict(tickmode='linear', dtick=1))
         st.plotly_chart(hist_fig, use_container_width=True)
+
+    # Gráfico de barras de ligações por estado (antigo mapa de calor)
+    with col1.expander("Número de Ligações por Estado"):
+        # Contagem de ligações por estado
+        state_counts = filtered_data['DDD'].value_counts().reset_index()
+        state_counts.columns = ['Estado', 'Número de Ligações']
+        # Criando o gráfico de barras
+        bar_fig = px.bar(state_counts, x='Número de Ligações', y='Estado', orientation='h',
+                         title='Número de Ligações por Estado',
+                         labels={'Número de Ligações': 'Número de Ligações', 'Estado': 'Estado'})
+        bar_fig.update_layout(xaxis_title='Número de Ligações', yaxis_title='Estado')
+        st.plotly_chart(bar_fig, use_container_width=True)
 
     # Gráfico de barras de ligações por SDR
     with col2.expander("Ligações por SDR"):
