@@ -4,3 +4,6 @@ plotly
 geopandas
 geobr
 matplotlib
+pyproj
+shapely
+fiona
