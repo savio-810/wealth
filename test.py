@@ -3,10 +3,13 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
+import geopandas as gpd
+from geobr import read_state
+import matplotlib.pyplot as plt
 
 # Função para processar novos dados
 def process_new_data(new_data):
-    df_col = new_data[['From', 'Connect time', 'Charged time, hour:min:sec']]
+    df_col = new_data[['From', 'To', 'Connect time', 'Charged time, hour:min:sec']]
     
     valores_para_filtrar = ['3231420315', '3231420314', '3231420319', '1006 (3231420314 - Camila)',  
                             '1008 (3231420315 - Victoria)', '3231420316', '1010 (3231420316 - Aide)', '3231420312', 
@@ -41,6 +44,42 @@ def process_new_data(new_data):
 
     df_col['Connect time'] = pd.to_datetime(df_col['Connect time'], format='%d-%m-%y %H:%M:%S')
     df_col['Charged time, hour:min:sec'] = pd.to_timedelta(df_col['Charged time, hour:min:sec'])
+    
+    # Dicionário de DDDs para estados
+    ddd_to_state = {
+        '61': 'Distrito Federal',
+        '62': 'Goiás', '64': 'Goiás',
+        '65': 'Mato Grosso', '66': 'Mato Grosso',
+        '67': 'Mato Grosso do Sul',
+        '82': 'Alagoas',
+        '71': 'Bahia', '73': 'Bahia', '74': 'Bahia', '75': 'Bahia', '77': 'Bahia',
+        '85': 'Ceará', '88': 'Ceará',
+        '98': 'Maranhão', '99': 'Maranhão',
+        '83': 'Paraíba',
+        '81': 'Pernambuco', '87': 'Pernambuco',
+        '86': 'Piauí', '89': 'Piauí',
+        '84': 'Rio Grande do Norte',
+        '79': 'Sergipe',
+        '68': 'Acre',
+        '96': 'Amapá',
+        '92': 'Amazonas', '97': 'Amazonas',
+        '91': 'Pará', '93': 'Pará', '94': 'Pará',
+        '69': 'Rondônia',
+        '95': 'Roraima',
+        '63': 'Tocantins',
+        '27': 'Espírito Santo', '28': 'Espírito Santo',
+        '31': 'Minas Gerais', '32': 'Minas Gerais', '33': 'Minas Gerais', '34': 'Minas Gerais', '35': 'Minas Gerais', '37': 'Minas Gerais', 
+        '38': 'Minas Gerais',
+        '21': 'Rio de Janeiro', '22': 'Rio de Janeiro', '24': 'Rio de Janeiro',
+        '11': 'São Paulo', '12': 'São Paulo', '13': 'São Paulo', '14': 'São Paulo', '15': 'São Paulo', '16': 'São Paulo', '17': 'São Paulo', 
+        '18': 'São Paulo', '19': 'São Paulo',
+        '41': 'Paraná', '42': 'Paraná', '43': 'Paraná', '44': 'Paraná', '45': 'Paraná', '46': 'Paraná',
+        '51': 'Rio Grande do Sul', '53': 'Rio Grande do Sul', '54': 'Rio Grande do Sul', '55': 'Rio Grande do Sul',
+        '47': 'Santa Catarina', '48': 'Santa Catarina', '49': 'Santa Catarina'
+    }
+
+    # Extraindo DDD e mapeando para o estado correspondente
+    df_col['DDD'] = df_col['To'].str[2:4].map(ddd_to_state)
 
     return df_col
 
@@ -103,6 +142,39 @@ if uploaded_file is not None:
         hist_fig.update_layout(xaxis=dict(tickmode='linear', dtick=1))
         st.plotly_chart(hist_fig, use_container_width=True)
 
+    # Mapa de calor de ligações por estado
+    with col1.expander("Mapa de Calor de Ligações por Estado"):
+        # Contagem de ligações por estado
+        state_counts = filtered_data['DDD'].value_counts().reset_index()
+        state_counts.columns = ['Estado', 'Número de Ligações']
+
+        # Carregar o mapa do Brasil dividido por estados
+        brasil = read_state(year=2020)
+
+        # Mapeamento de DDDs para estados
+        estado_abbr = {
+            'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM', 'Bahia': 'BA', 'Ceará': 'CE', 
+            'Distrito Federal': 'DF', 'Espírito Santo': 'ES', 'Goiás': 'GO', 'Maranhão': 'MA', 'Mato Grosso': 'MT', 
+            'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG', 'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 
+            'Pernambuco': 'PE', 'Piauí': 'PI', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN', 'Rio Grande do Sul': 'RS', 
+            'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC', 'São Paulo': 'SP', 'Sergipe': 'SE', 'Tocantins': 'TO'
+        }
+        state_counts['Estado'] = state_counts['Estado'].map(estado_abbr)
+
+        # Merge das contagens de ligações com o GeoDataFrame
+        brasil = brasil.merge(state_counts, left_on='abbrev_state', right_on='Estado', how='left')
+
+        # Plot do mapa de calor
+        fig, ax = plt.subplots(1, 1, figsize=(15, 15))
+        brasil.plot(column='Número de Ligações', cmap='Reds', linewidth=0.8, ax=ax, edgecolor='0.8', legend=True)
+        ax.set_title('Número de Ligações por Estado', fontdict={'fontsize': '15', 'fontweight' : '3'})
+
+        # Adicionar legenda numérica em cada estado
+        for x, y, label in zip(brasil.geometry.centroid.x, brasil.geometry.centroid.y, brasil['Número de Ligações']):
+            ax.text(x, y, str(int(label)) if not pd.isna(label) else '0', fontsize=12, ha='center', color='black')
+
+        st.pyplot(fig)
+
     # Gráfico de barras de ligações por SDR
     with col2.expander("Ligações por SDR"):
         sdr_counts = filtered_data['From'].value_counts()
@@ -138,6 +210,7 @@ if uploaded_file is not None:
                 sdr_data = filtered_data[filtered_data['From'] == sdr]
                 sdr_line_data = sdr_data.groupby('Data').size().reset_index(name=sdr)
                 line_fig.add_scatter(x=sdr_line_data['Data'], y=sdr_line_data[sdr], mode='lines+markers', name=sdr)
+    
         st.plotly_chart(line_fig, use_container_width=True)
 else:
     st.write("Por favor, faça o upload de um arquivo CSV para começar.")
